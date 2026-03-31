@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title data-key="site_title">Свежая Микрозелень | Olga's Microgreens</title>
+  <style>
+    :root { --green: #2e7d32; --light-green: #4caf50; --very-light: #e8f5e9; --dark: #1b5e20; --gray: #555; }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: system-ui, sans-serif; line-height:1.6; color:#333; background:var(--very-light); }
+    header { position:relative; height:500px; overflow:hidden; color:white; text-align:center; }
+    .slider { position:absolute; inset:0; display:flex; transition:transform 0.6s ease; }
+    .slide { min-width:100%; height:100%; background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; flex-direction:column; text-shadow:0 2px 8px rgba(0,0,0,0.7); }
+    .slide h1 { font-size:4rem; margin-bottom:0.5rem; }
+    .slide p { font-size:1.6rem; max-width:800px; margin-bottom:1rem; }
+    .slider-dots { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); display:flex; gap:12px; }
+    .dot { width:14px; height:14px; background:rgba(255,255,255,0.5); border-radius:50%; cursor:pointer; }
+    .dot.active { background:white; transform:scale(1.3); }
+    .container { max-width:1100px; margin:0 auto; padding:0 1rem; }
+    section { padding:4rem 0; }
+    h2 { text-align:center; color:var(--dark); margin-bottom:2.5rem; font-size:2.4rem; }
+    .products { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px,1fr)); gap:2rem; }
+    .card { background:white; border-radius:12px; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,0.08); transition:transform 0.25s; }
+    .card:hover { transform:translateY(-8px); }
+    .card img { width:100%; height:220px; object-fit:cover; }
+    .card-content { padding:1.5rem; text-align:center; }
+    .card h3 { color:var(--green); margin-bottom:0.6rem; }
+    .price { font-size:1.5rem; font-weight:bold; color:var(--dark); margin:0.8rem 0; }
+    .btn-add { background:var(--light-green); color:white; border:none; padding:0.8rem 1.5rem; border-radius:50px; cursor:pointer; font-weight:bold; transition:all 0.3s; }
+    .btn-add:hover, .btn-add:focus { background:var(--dark); transform:scale(1.05); outline:none; }
+    #cart-icon { position:fixed; top:70px; right:120px; background:var(--green); color:white; width:60px; height:60px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.8rem; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.2); z-index:1002; }
+    #cart-count { position:absolute; top:-8px; right:-8px; background:red; color:white; font-size:0.9rem; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+    #cart-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:2000; align-items:center; justify-content:center; }
+    #cart-content { background:white; border-radius:12px; width:90%; max-width:600px; max-height:90vh; overflow-y:auto; padding:2rem; position:relative; }
+    #close-cart { position:absolute; top:10px; right:15px; font-size:2rem; cursor:pointer; color:#888; }
+    .cart-item { display:flex; justify-content:space-between; align-items:center; padding:1rem 0; border-bottom:1px solid #eee; }
+    .cart-total { font-size:1.4rem; font-weight:bold; text-align:right; margin:1.5rem 0; }
+    .btn-whatsapp { background:#25D366; color:white; border:none; padding:1rem 2rem; border-radius:50px; font-size:1.2rem; cursor:pointer; width:100%; margin-top:1rem; }
+    .cta { background:var(--light-green); color:white; text-align:center; padding:4rem 1rem; }
+    footer { text-align:center; padding:2rem; background:#111; color:#aaa; }
+    .lang-switcher { position:fixed; top:20px; right:20px; z-index:1001; background:rgba(255,255,255,0.9); padding:8px 12px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
+    .lang-switcher button { background:none; border:none; cursor:pointer; font-size:1rem; margin:0 6px; padding:4px 8px; }
+    button:focus { outline:2px solid var(--dark); outline-offset:2px; }
+    
+    <span style="color: hsl(var(--primary)); font-weight: 500;">@media</span> (max-width: 768px) {
+      .slide h1 { font-size:2.5rem; }
+      .slide p { font-size:1.2rem; max-width:90%; }
+      .products { grid-template-columns:repeat(auto-fit, minmax(250px,1fr)); }
+      #cart-icon { top:20px; right:20px; width:50px; height:50px; font-size:1.5rem; }
+      .lang-switcher { top:10px; right:10px; padding:6px 10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="lang-switcher">
+    <button onclick="setLanguage('ru')" aria-label="Русский язык">🇷🇺 Русский</button>
+    <button onclick="setLanguage('me')" aria-label="Crnogorski jezik">🇲🇪 Crnogorski</button>
+    <button onclick="setLanguage('en')" aria-label="English language">🇬🇧 English</button>
+  </div>
+  <header>
+    <div class="slider" id="slider">
+      <div class="slide" style="background-image: url('https://picsum.photos/id/1015/1200/500');"><h1 data-key="title">Свежая Микрозелень</h1><p data-key="slide1_sub">Прямо с мини-фермы в Подгорице — суперфуд каждый день</p></div>
+      <div class="slide" style="background-image: url('https://picsum.photos/id/201/1200/500');"><h1 data-key="slide2_title">Полезно и красиво</h1><p data-key="slide2_sub">Украшайте блюда витаминами и вкусом</p></div>
+      <div class="slide" style="background-image: url('https://picsum.photos/id/133/1200/500');"><h1 data-key="slide3_title">Доставка по Бару и Подгорице</h1><p data-key="slide3_sub">Собираем в день заказа — максимальная свежесть</p></div>
+    </div>
+    <div class="slider-dots" id="dots"></div>
+  </header>
+  <div class="container">
+    <section>
+      <h2 data-key="assortment">Наш ассортимент</h2>
+      <div class="products" id="products"></div>
+    </section>
+    <!-- Польза микрозелени -->
+    <section>
+      <h2 data-key="benefits_title">Польза микрозелени для здоровья</h2>
+      <div style="background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 6px 18px rgba(0,0,0,0.08); margin: 2rem 0;">
+        <p style="text-align: center; font-size: 1.3rem; margin-bottom: 2rem; color: var(--gray);" data-key="benefits_intro">
+          Микрозелень — это настоящий суперфуд: в 100 г содержится до 40 раз больше витаминов и антиоксидантов, чем в зрелых овощах!
+        </p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.8rem;">
+          <div style="text-align: center; padding: 1.5rem; background: var(--very-light); border-radius: 12px;">
+            <div style="font-size: 3.5rem; margin-bottom: 1rem;">💪</div>
+            <h3 style="color: var(--green);" data-key="benefit1_title">Супер-концентрация витаминов</h3>
+            <p data-key="benefit1_desc">До 40× больше витамина E (красная капуста), 6× витамина C и 4× бета-каротина по сравнению со зрелой зеленью</p>
+          </div>
+          <div style="text-align: center; padding: 1.5rem; background: var(--very-light); border-radius: 12px;">
+            <div style="font-size: 3.5rem; margin-bottom: 1rem;">🛡️</div>
+            <h3 style="color: var(--green);" data-key="benefit2_title">Поддержка иммунитета</h3>
+            <p data-key="benefit2_desc">Богата витамином C, цинком, β-каротином и фолатами — помогает бороться с вирусами и воспалениями</p>
+          </div>
+          <div style="text-align: center; padding: 1.5rem; background: var(--very-light); border-radius: 12px;">
+            <div style="font-size: 3.5rem; margin-bottom: 1rem;">❤️</div>
+            <h3 style="color: var(--green);" data-key="benefit3_title">Антиоксиданты и детокс</h3>
+            <p data-key="benefit3_desc">Высокое содержание полифенолов и флавоноидов — защищает клетки от старения и выводит токсины</p>
+          </div>
+          <div style="text-align: center; padding: 1.5rem; background: var(--very-light); border-radius: 12px;">
+            <div style="font-size: 3.5rem; margin-bottom: 1rem;">🌱</div>
+            <h3 style="color: var(--green);" data-key="benefit4_title">Легкоусвояемые питательные вещества</h3>
+            <p data-key="benefit4_desc">Содержит все полезные вещества в доступной форме — идеально для детей, пожилых и вегетарианцев</p>
+          </div>
+          <div style="text-align: center; padding: 1.5rem; background: var(--very-light); border-radius: 12px;">
+            <div style="font-size: 3.5rem; margin-bottom: 1rem;">⚡</div>
+            <h3 style="color: var(--green);" data-key="benefit5_title">Энергия и метаболизм</h3>
+            <p data-key="benefit5_desc">Богата витаминами группы B и железом — повышает уровень энергии, улучшает обмен веществ и борется с усталостью</p>
+          </div>
+          <div style="text-align: center; padding: 1.5rem; background: var(--very-light); border-radius: 12px;">
+            <div style="font-size: 3.5rem; margin-bottom: 1rem;">🧠</div>
+            <h3 style="color: var(--green);" data-key="benefit6_title">Здоровье мозга и зрения</h3>
+            <p data-key="benefit6_desc">Высокий уровень лютеина, зеаксантина и бета-каротина — поддерживает зрение, когнитивные функции и защиту мозга</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="cta">
+      <h2 data-key="cta_title">Готовы заказать?</h2>
+      <p style="font-size:1.3rem; max-width:700px; margin:0 auto 2rem;" data-key="cta_text">
+        Добавьте микрозелень в корзину и отправьте заказ в WhatsApp — ответим за 15 минут!
+      </p>
+    </section>
+  </div>
+  <!-- Корзина -->
+  <div id="cart-icon">🛒 <span id="cart-count">0</span></div>
+  <div id="cart-modal">
+    <div id="cart-content">
+      <span id="close-cart">&times;</span>
+      <h2 data-key="cart_title">Ваша корзина</h2>
+      <div id="cart-items"></div>
+      <div class="cart-total"><span data-key="cart_total_label">Итого:</span> <span id="cart-total">0 €</span></div>
+      <form id="order-form">
+        <input type="text" id="name" data-key="name_placeholder" placeholder="Ваше имя" required style="width:100%; padding:12px; margin:10px 0; border:1px solid #ccc; border-radius:8px;">
+        <input type="tel" id="phone" data-key="phone_placeholder" placeholder="Ваш телефон (+382...)" required style="width:100%; padding:12px; margin:10px 0; border:1px solid #ccc; border-radius:8px;">
+        <button type="submit" class="btn-whatsapp" data-key="send_whatsapp">Отправить заказ в WhatsApp</button>
+      </form>
+    </div>
+  </div>
+  <footer data-key="footer">© 2026 Olga's Microgreens • Bar • Podgorica</footer>
+  <script>
+    const translations = {
+      ru: {
+        site_title: "Свежая Микрозелень | Olga's Microgreens",
+        title: "Свежая Микрозелень",
+        slide1_sub: "Прямо с мини-фермы в Подгорице — суперфуд каждый день",
+        slide2_title: "Полезно и красиво",
+        slide2_sub: "Украшайте блюда витаминами и вкусом",
+        slide3_title: "Доставка по Бару и Подгорице",
+        slide3_sub: "Собираем в день заказа — максимальная свежесть",
+        assortment: "Наш ассортимент",
+        benefits_title: "Польза микрозелени для здоровья",
+        benefits_intro: "Микрозелень — это настоящий суперфуд: в 100 г содержится до 40 раз больше витаминов и антиоксидантов, чем в зрелых овощах!",
+        benefit1_title: "Супер-концентрация витаминов",
+        benefit1_desc: "До 40× больше витамина E (красная капуста), 6× витамина C и 4× бета-каротина по сравнению со зрелой зеленью",
+        benefit2_title: "Поддержка иммунитета",
+        benefit2_desc: "Богата витамином C, цинком, β-каротином и фолатами — помогает бороться с вирусами и воспалениями",
+        benefit3_title: "Антиоксиданты и детокс",
+        benefit3_desc: "Высокое содержание полифенолов и флавоноидов — защищает клетки от старения и выводит токсины",
+        benefit4_title: "Легкоусвояемые питательные вещества",
+        benefit4_desc: "Содержит все полезные вещества в доступной форме — идеально для детей, пожилых и вегетарианцев",
+        benefit5_title: "Энергия и метаболизм",
+        benefit5_desc: "Богата витаминами группы B и железом — повышает уровень энергии, улучшает обмен веществ и борется с усталостью",
+        benefit6_title: "Здоровье мозга и зрения",
+        benefit6_desc: "Высокий уровень лютеина, зеаксантина и бета-каротина — поддерживает зрение, когнитивные функции и защиту мозга",
+        cta_title: "Готовы заказать?",
+        cta_text: "Добавьте микрозелень в корзину и отправьте заказ в WhatsApp — ответим за 15 минут!",
+        cart_title: "Ваша корзина",
+        cart_total_label: "Итого:",
+        cart_empty: "Корзина пуста",
+        send_whatsapp: "Отправить заказ в WhatsApp",
+        name_placeholder: "Ваше имя",
+        phone_placeholder: "Ваш телефон (+382...)",
+        add_to_cart: "В корзину",
+        remove: "Удалить",
+        sunflower: "Подсолнечник",
+        radish_jp: "Редис Японский",
+        radish_cn: "Редис Китайский",
+        pea: "Горох",
+        basil: "Базилик",
+        beet: "Свекла"
+      },
+      me: {
+        site_title: "Svježe Mikrobilje | Olga's Microgreens",
+        title: "Svježe Mikrobilje",
+        slide1_sub: "Direktno sa mini-farme u Podgorici — superhrana svaki dan",
+        slide2_title: "Zdravo i lijepo",
+        slide2_sub: "Ukrasite jela vitaminima i ukusom",
+        slide3_title: "Dostava za Bar i Podgoricu",
+        slide3_sub: "Beremo u dan narudžbe — maksimalna svježina",
+        assortment: "Naš asortiman",
+        benefits_title: "Koristi mikrobilja za zdravlje",
+        benefits_intro: "Mikrobilje je pravi superfood: u 100 g sadrži do 40 puta više vitamina i antioksidanata nego u zrelom povrću!",
+        benefit1_title: "Super koncentracija vitamina",
+        benefit1_desc: "Do 40× više vitamina E (crveni kupus), 6× vitamina C i 4× beta-karotena u poređenju sa zrelim zelenilom",
+        benefit2_title: "Podrška imunitetu",
+        benefit2_desc: "Bogata vitaminom C, cinkom, β-karotinom i folatima — pomaže u borbi protiv virusa i upala",
+        benefit3_title: "Antioksidanti i detoks",
+        benefit3_desc: "Visok sadržaj polifenola i flavonoida — štiti ćelije od starenja i izbacuje toksine",
+        benefit4_title: "Lako apsorbirajuće hranljive materije",
+        benefit4_desc: "Sadrži sve korisne materije u dostupnoj formi — idealno za djecu, starije i vegetarijance",
+        benefit5_title: "Energija i metabolizam",
+        benefit5_desc: "Bogata vitaminima B grupe i gvožđem — povećava nivo energije, poboljšava metabolizam i bori se protiv umora",
+        benefit6_title: "Zdravlje mozga i vida",
+        benefit6_desc: "Visok nivo luteina, zeaksantina i beta-karotena — podržava vid, kognitivne funkcije i zaštitu mozga",
+        cta_title: "Spremni za narudžbu?",
+        cta_text: "Dodajte mikrobilje u korpu i pošaljite narudžbu na WhatsApp — odgovorićemo za 15 minuta!",
+        cart_title: "Vaša korpa",
+        cart_total_label: "Ukupno:",
+        cart_empty: "Korpa je prazna",
+        send_whatsapp: "Pošaljite narudžbu na WhatsApp",
+        name_placeholder: "Vaše ime",
+        phone_placeholder: "Vaš telefon (+382...)",
+        add_to_cart: "Dodaj u korpu",
+        remove: "Ukloni",
+        sunflower: "Suncokret",
+        radish_jp: "Japanska rotkvica",
+        radish_cn: "Kineska rotkvica",
+        pea: "Grašak",
+        basil: "Bosiljak",
+        beet: "Cvekla"
+      },
+      en: {
+        site_title: "Fresh Microgreens | Olga's Microgreens",
+        title: "Fresh Microgreens",
+        slide1_sub: "Straight from our mini-farm in Podgorica — superfood every day",
+        slide2_title: "Healthy & Beautiful",
+        slide2_sub: "Decorate dishes with vitamins and taste",
+        slide3_title: "Delivery in Bar & Podgorica",
+        slide3_sub: "Harvested on order day — maximum freshness",
+        assortment: "Our Assortment",
+        benefits_title: "Health Benefits of Microgreens",
+        benefits_intro: "Microgreens are a true superfood: 100 g contains up to 40 times more vitamins and antioxidants than mature vegetables!",
+        benefit1_title: "Super Vitamin Concentration",
+        benefit1_desc: "Up to 40× more vitamin E (red cabbage), 6× vitamin C and 4× beta-carotene compared to mature greens",
+        benefit2_title: "Immune Support",
+        benefit2_desc: "Rich in vitamin C, zinc, β-carotene and folate — helps fight viruses and inflammation",
+        benefit3_title: "Antioxidants & Detox",
+        benefit3_desc: "High content of polyphenols and flavonoids — protects cells from aging and removes toxins",
+        benefit4_title: "Easily Absorbable Nutrients",
+        benefit4_desc: "Contains all beneficial substances in an accessible form — ideal for children, elderly and vegetarians",
+        benefit5_title: "Energy & Metabolism",
+        benefit5_desc: "Rich in B vitamins and iron — increases energy levels, improves metabolism and fights fatigue",
+        benefit6_title: "Brain & Eye Health",
+        benefit6_desc: "High levels of lutein, zeaxanthin and beta-carotene — supports vision, cognitive function and brain protection",
+        cta_title: "Ready to Order?",
+        cta_text: "Add microgreens to cart and send order via WhatsApp — we'll reply in 15 minutes!",
+        cart_title: "Your Cart",
+        cart_total_label: "Total:",
+        cart_empty: "Cart is empty",
+        send_whatsapp: "Send order via WhatsApp",
+        name_placeholder: "Your name",
+        phone_placeholder: "Your phone (+382...)",
+        add_to_cart: "Add to Cart",
+        remove: "Remove",
+        sunflower: "Sunflower",
+        radish_jp: "Japanese Radish",
+        radish_cn: "Chinese Radish",
+        pea: "Pea",
+        basil: "Basil",
+        beet: "Beet"
+      }
+    };
+    
+    let cart = [];
+    let currentLang = 'ru';
+    const productsData = [
+      { id:1, nameKey:"sunflower", price:1.20, unit:"50 г", img:"https://picsum.photos/id/292/300/220" },
+      { id:2, nameKey:"radish_jp", price:1.10, unit:"40 г", img:"https://picsum.photos/id/201/300/220" },
+      { id:3, nameKey:"radish_cn", price:1.30, unit:"50 г", img:"https://picsum.photos/id/133/300/220" },
+      { id:4, nameKey:"pea", price:1.40, unit:"30 г", img:"https://picsum.photos/id/251/300/220" },
+      { id:5, nameKey:"basil", price:1.40, unit:"30 г", img:"https://picsum.photos/id/292/300/220" },
+      { id:6, nameKey:"beet", price:1.40, unit:"30 г", img:"https://picsum.photos/id/201/300/220" }
+    ];
+    
+    function renderProducts() {
+      const container = document.getElementById('products');
+      if (!container) return;
+      container.innerHTML = '';
+      
+      productsData.forEach(p => {
+        const name = translations[currentLang][p.nameKey] || p.nameKey;
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <img src="${p.img}" alt="${name}" loading="lazy">
+          <div class="card-content">
+            <h3>${name}</h3>
+            <div class="price">${p.price} € / ${p.unit}</div>
+            <button class="btn-add" data-id="${p.id}" aria-label="${translations[currentLang].add_to_cart} ${name}">
+              ${translations[currentLang].add_to_cart}
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+      
+      document.querySelectorAll('.btn-add').forEach(btn => {
+        btn.onclick = () => addToCart(parseInt(btn.dataset.id));
+      });
+    }
+    
+    function addToCart(id) {
+      const product = productsData.find(p => p.id === id);
+      if (!product) return;
+      
+      const existing = cart.find(item => item.id === id);
+      if (existing) {
+        existing.qty++;
+      } else {
+        cart.push({ ...product, qty: 1 });
+      }
+      
+      updateCart();
+      
+      const icon = document.getElementById('cart-icon');
+      if (icon) {
+        icon.style.transform = 'scale(1.4)';
+        setTimeout(() => icon.style.transform = 'scale(1)', 200);
+      }
+    }
+    
+    function updateCart() {
+      const container = document.getElementById('cart-items');
+      const totalEl = document.getElementById('cart-total');
+      const countEl = document.getElementById('cart-count');
+      
+      if (!container) return;
+      container.innerHTML = '';
+      
+      if (cart.length === 0) {
+        container.innerHTML = `<p style="text-align:center; padding:2rem; color:#888;">${translations[currentLang].cart_empty}</p>`;
+        if (totalEl) totalEl.textContent = '0 €';
+        if (countEl) countEl.textContent = '0';
+        return;
+      }
+      
+      let total = 0;
+      cart.forEach((item, index) => {
+        const itemTotal = (item.price * item.qty).toFixed(2);
+        total += parseFloat(itemTotal);
+        const div = document.createElement('div');
+        div.className = 'cart-item';
+        div.innerHTML = `
+          <div style="flex:1;">
+            <strong>${translations[currentLang][item.nameKey] || item.nameKey}</strong><br>
+            <small>${item.price} € × ${item.qty}</small>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <button onclick="changeQty(${index},1)" aria-label="Increase quantity">+</button>
+            <span style="min-width:30px;text-align:center;">${item.qty}</span>
+            <button onclick="changeQty(${index},-1)" aria-label="Decrease quantity">-</button>
+            <button onclick="removeFromCart(${index})" style="color:red;" aria-label="Remove item">${translations[currentLang].remove}</button>
+          </div>
+          <div style="font-weight:bold">${itemTotal} €</div>
+        `;
+        container.appendChild(div);
+      });
+      
+      if (totalEl) totalEl.textContent = total.toFixed(2) + ' €';
+      if (countEl) countEl.textContent = cart.reduce((sum, item) => sum + item.qty, 0);
+    }
+    
+    window.changeQty = function(index, delta) {
+      cart[index].qty += delta;
+      if (cart[index].qty < 1) {
+        cart.splice(index, 1);
+      }
+      updateCart();
+    };
+    
+    window.removeFromCart = function(index) {
+      cart.splice(index, 1);
+      updateCart();
+    };
+    
+    function setLanguage(lang) {
+      if (!translations[lang]) return;
+      
+      currentLang = lang;
+      localStorage.setItem('lang', lang);
+      
+      document.querySelectorAll('[data-key]').forEach(el => {
+        const key = el.getAttribute('data-key');
+        if (translations[lang] && translations[lang][key]) {
+          if (el.tagName === 'INPUT' && el.type !== 'submit') {
+            el.placeholder = translations[lang][key];
+          } else if (el.tagName === 'BUTTON' && el.type === 'submit') {
+            el.textContent = translations[lang][key];
+          } else {
+            el.textContent = translations[lang][key];
+          }
+        }
+      });
+      
+      document.title = translations[lang].site_title || document.title;
+      
+      renderProducts();
+      updateCart();
+    }
+    
+    function sendWhatsAppOrder() {
+      const name = document.getElementById('name').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      
+      if (!name || !phone) {
+        alert(currentLang === 'ru' ? 'Пожалуйста, заполните все поля' : 
+              currentLang === 'me' ? 'Molimo popunite sva polja' : 
+              'Please fill in all fields');
+        return;
+      }
+      
+      let message = currentLang === 'ru' ? 'Новый заказ микрозелени:\n' :
+                   currentLang === 'me' ? 'Nova narudžba mikrobilja:\n' :
+                   'New microgreens order:\n';
+      
+      message += currentLang === 'ru' ? `Имя: ${name}\n` :
+                currentLang === 'me' ? `Ime: ${name}\n` :
+                `Name: ${name}\n`;
+      
+      message += currentLang === 'ru' ? `Телефон: ${phone}\n\n` :
+                currentLang === 'me' ? `Telefon: ${phone}\n\n` :
+                `Phone: ${phone}\n\n`;
+      
+      message += currentLang === 'ru' ? `Заказ:\n` :
+                currentLang === 'me' ? `Narudžba:\n` :
+                `Order:\n`;
+      
+      cart.forEach(item => {
+        const itemName = translations[currentLang][item.nameKey] || item.nameKey;
+        message += `- ${itemName}: ${item.qty} × ${item.price}€ = ${(item.qty * item.price).toFixed(2)}€\n`;
+      });
+      
+      const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      message += currentLang === 'ru' ? `\nИтого: ${total.toFixed(2)}€` :
+                currentLang === 'me' ? `\nUkupno: ${total.toFixed(2)}€` :
+                `\nTotal: ${total.toFixed(2)}€`;
+      
+      const encodedMessage = encodeURIComponent(message);
+      const whatsappUrl = `https://wa.me/382XXXXXXXXX?text=${encodedMessage}`;
+      
+      cart = [];
+      updateCart();
+      document.getElementById('cart-modal').style.display = 'none';
+      document.getElementById('order-form').reset();
+      
+      window.open(whatsappUrl, '_blank');
+    }
+    
+    window.onload = function() {
+      const savedLang = localStorage.getItem('lang');
+      if (savedLang && translations[savedLang]) {
+        currentLang = savedLang;
+      }
+      
+      renderProducts();
+      setLanguage(currentLang);
+      
+      let currentSlide = 0;
+      const slider = document.getElementById('slider');
+      const dotsContainer = document.getElementById('dots');
+      
+      if (slider && dotsContainer) {
+        document.querySelectorAll('.slide').forEach((_, i) => {
+          const dot = document.createElement('div');
+          dot.classList.add('dot');
+          if (i === 0) dot.classList.add('active');
+          dot.addEventListener('click', () => {
+            currentSlide = i;
+            slider.style.transform = `translateX(-${currentSlide * 100}%)`;
+            document.querySelectorAll('.dot').forEach((d, idx) => {
+              d.classList.toggle('active', idx === currentSlide);
+            });
+          });
+          dotsContainer.appendChild(dot);
+        });
+        
+        setInterval(() => {
+          currentSlide = (currentSlide + 1) % 3;
+          slider.style.transform = `translateX(-${currentSlide * 100}%)`;
+          document.querySelectorAll('.dot').forEach((d, i) => {
+            d.classList.toggle('active', i === currentSlide);
+          });
+        }, 5000);
+      }
+      
+      const cartIcon = document.getElementById('cart-icon');
+      const closeCart = document.getElementById('close-cart');
+      const cartModal = document.getElementById('cart-modal');
+      const orderForm = document.getElementById('order-form');
+      
+      if (cartIcon) {
+        cartIcon.addEventListener('click', () => {
+          if (cartModal) {
+            cartModal.style.display = 'flex';
+            updateCart();
+          }
+        });
+      }
+      
+      if (closeCart) {
+        closeCart.addEventListener('click', () => {
+          if (cartModal) {
+            cartModal.style.display = 'none';
+          }
+        });
+      }
+      
+      if (cartModal) {
+        cartModal.addEventListener('click', e => {
+          if (e.target.id === 'cart-modal') {
+            cartModal.style.display = 'none';
+          }
+        });
+      }
+      
+      if (orderForm) {
+        orderForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          sendWhatsAppOrder();
+        });
+      }
+    };
+  </script>
+</body>
+</html>
